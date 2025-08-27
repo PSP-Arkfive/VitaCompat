@@ -15,18 +15,18 @@
  * along with PRO CFW. If not, see <http://www.gnu.org/licenses/ .
  */
 
+#include <string.h>
 #include <pspsdk.h>
 #include <pspsysmem_kernel.h>
+
+#include <ark.h>
+#include <cfwmacros.h>
+#include <rebootconfig.h>
 #include <systemctrl.h>
 #include <systemctrl_se.h>
 #include <systemctrl_private.h>
-#include <ark.h>
-#include "rebootconfig.h"
-#include "functions.h"
-#include "macros.h"
-#include "libs/graphics/graphics.h"
 
-#include "core/compat/vita/rebootex/payload.h"
+#include "rebootex/payload.h"
 
 PSP_MODULE_INFO("ARKCompatLayer", 0x3007, 1, 0);
 
@@ -34,7 +34,11 @@ ARKConfig* ark_config = NULL;
 SEConfig* se_config = NULL;
 RebootConfigARK* reboot_config = NULL;
 
-extern void ARKVitaOnModuleStart(SceModule2 * mod);
+extern void initVitaSysPatch();
+
+int sctrlARKDummyFunction(){
+    return 0;
+}
 
 // Flush Instruction and Data Cache
 void sctrlFlushCache()
@@ -74,11 +78,15 @@ int module_start(SceSize args, void * argp)
         return 2;
     }
 
+    if (size_rebootbuffer_vita == 0){
+        return 3;
+    }
+
     // set rebootex for Vita
     sctrlHENSetRebootexOverride(rebootbuffer_vita);
     
     // Vita patches
-    PROVitaSysPatch();
+    initVitaSysPatch();
    
     sctrlFlushCache();
     
@@ -88,6 +96,7 @@ int module_start(SceSize args, void * argp)
 
 int module_stop(SceSize args, void *argp)
 {
+    extern void spuShutdown();
     spuShutdown();
     return 0;
 }

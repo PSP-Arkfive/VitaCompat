@@ -31,5 +31,8 @@ void patchFileSystemDirSyscall(void);
 // FileIO patch
 extern SceModule2* patchFileIO();
 
+// Flash0 patch
+int patchKermitPeripheral();
+
 #endif
 

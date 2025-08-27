@@ -15,22 +15,24 @@
  * along with PRO CFW. If not, see <http://www.gnu.org/licenses/ .
  */
 
+#include <string.h>
+#include <stdio.h>
 #include <pspinit.h>
 #include <pspkernel.h>
 #include <psputilsforkernel.h>
-#include <string.h>
-#include <stdio.h>
-#include <module2.h>
+
 #include <ark.h>
+#include <cfwmacros.h>
+#include <module2.h>
+#include <rebootconfig.h>
 #include <systemctrl.h>
+#include <systemctrl_se.h>
 #include <systemctrl_private.h>
-#include <macros.h>
-#include <functions.h>
+
 #include "filesystem.h"
 #include "vitaflash.h"
-#include "rebootconfig.h"
 #include "fatef.h"
-#include "core/compat/pentazemin/flashfs.h"
+#include "flashfs.h" // TODO: get rid of this
 
 extern RebootConfigARK* reboot_config;
 
@@ -216,15 +218,15 @@ int sceIoAddDrvHook(PspIoDrv * driver)
 
         // Configure ef driver
         memcpy(&ef_funcs, driver->funcs, sizeof(PspIoDrvFuncs));
-        ef_funcs.IoOpen = sceIoEfOpenHook;
-        ef_funcs.IoRemove = sceIoEfRemoveHook;
-        ef_funcs.IoMkdir = sceIoEfMkdirHook;
-        ef_funcs.IoRmdir = sceIoEfRmdirHook;
-        ef_funcs.IoDopen = sceIoEfDopenHook;
-        ef_funcs.IoGetstat = sceIoEfGetStatHook;
-        ef_funcs.IoChstat = sceIoEfChStatHook;
-        ef_funcs.IoRename = sceIoEfRenameHook;
-        ef_funcs.IoChdir = sceIoEfChdirHook;
+        ef_funcs.IoOpen = (void*)sceIoEfOpenHook;
+        ef_funcs.IoRemove = (void*)sceIoEfRemoveHook;
+        ef_funcs.IoMkdir = (void*)sceIoEfMkdirHook;
+        ef_funcs.IoRmdir = (void*)sceIoEfRmdirHook;
+        ef_funcs.IoDopen = (void*)sceIoEfDopenHook;
+        ef_funcs.IoGetstat = (void*)sceIoEfGetStatHook;
+        ef_funcs.IoChstat = (void*)sceIoEfChStatHook;
+        ef_funcs.IoRename = (void*)sceIoEfRenameHook;
+        ef_funcs.IoChdir = (void*)sceIoEfChdirHook;
 
         memcpy(&ef_drv, ms_drv, sizeof(PspIoDrv));
         ef_drv.name = "ef";

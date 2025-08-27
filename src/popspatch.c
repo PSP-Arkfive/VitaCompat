@@ -1,8 +1,11 @@
+#include <string.h>
 #include <pspsdk.h>
+
+#include <ark.h>
+#include <cfwmacros.h>
 #include <systemctrl.h>
-#include <macros.h>
+
 #include "popspatch.h"
-#include "functions.h"
 
 #define PSP_SPU_REGISTER 0x49F40000
 
@@ -89,7 +92,6 @@ static int myKernelLoadModule(char * fname, int flag, void * opt)
     char path[ARK_PATH_SIZE];
     int result = 0;
     int status = 0;
-    int startResult = 0;
 
     // load spu module
     strcpy(path, ark_config->arkpath);
@@ -100,9 +102,9 @@ static int myKernelLoadModule(char * fname, int flag, void * opt)
         spu_running = 1;
         static char g_DiscID[32];
         memset(g_DiscID, 0, sizeof(g_DiscID));
-        int n = sizeof(g_DiscID);
+        u32 n = sizeof(g_DiscID);
         sctrlGetInitPARAM("DISC_ID", NULL, &n, g_DiscID);
-        startResult = sceKernelStartModule(result, strlen(g_DiscID) + 1, g_DiscID, &status, NULL);
+        sceKernelStartModule(result, strlen(g_DiscID) + 1, g_DiscID, &status, NULL);
     }
     
     #ifdef DEBUG
@@ -124,7 +126,6 @@ static int myKernelLoadModule(char * fname, int flag, void * opt)
 // Patch for 6.60 popsman to work on Vita
 void patchPspPopsman(SceModule2* mod){
     u32 text_addr = mod->text_addr;
-    u32 top_addr = text_addr + mod->text_size;
 
     // TN hacks
     _sw(JR_RA, text_addr + 0x2F88);

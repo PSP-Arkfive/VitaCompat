@@ -25,7 +25,7 @@ C_OBJS = \
 	patches.o \
 	$(REBOOTEXDIR)/vita_rebootex/patches.o
 
-LIBS = -L $(ARKROOT)/libs
+LIBS =
 
 ifdef DEBUG
 CFLAGS += -DDEBUG=$(DEBUG)

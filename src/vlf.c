@@ -17,7 +17,7 @@
 
 #include <pspsdk.h>
 #include <systemctrl.h>
-#include <macros.h>
+#include <cfwmacros.h>
 
 // Fix VLF Module
 void patchVLF(SceModule2 * mod)

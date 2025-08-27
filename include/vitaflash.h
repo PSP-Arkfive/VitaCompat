@@ -1,8 +1,7 @@
 #ifndef VITAFLASH_H
 #define VITAFLASH_H
 
-#include <macros.h>
-#include "functions.h"
+#include <cfwmacros.h>
 
 #define FLASH_BACKUP "ms0:/flash.bak"
 
@@ -14,6 +13,6 @@ typedef struct VitaFlashBufferFile
     unsigned int size;
 } VitaFlashBufferFile;
 
-int patchKermitPeripheral(KernelFunctions*);
+int patchKermitPeripheral();
 
 #endif

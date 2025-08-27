@@ -1,42 +1,31 @@
+#include <string.h>
 #include <pspsdk.h>
 #include <pspsysmem_kernel.h>
 #include <psputilsforkernel.h>
 #include <pspinit.h>
 #include <pspkernel.h>
 #include <pspdisplay.h>
+
+#include <ark.h>
+#include <rebootconfig.h>
+#include <cfwmacros.h>
 #include <systemctrl.h>
 #include <systemctrl_se.h>
 #include <systemctrl_private.h>
-#include <ark.h>
-#include "rebootconfig.h"
-#include "functions.h"
-#include "macros.h"
+
+#include "filesystem.h"
 #include "popspatch.h"
-#include "libs/graphics/graphics.h"
 
 extern SEConfig* se_config;
 extern RebootConfigARK* reboot_config;
 
 extern int sceKernelSuspendThreadPatched(SceUID thid);
-
+extern void patchVLF(SceModule2 * mod);
 extern int (*_sctrlHENApplyMemory)(u32);
 extern int memoryHandlerVita(u32 p2);
 
 // Previous Module Start Handler
 STMOD_HANDLER previous = NULL;
-
-KernelFunctions _ktbl = { // for vita flash patcher
-    .KernelDcacheInvalidateRange = &sceKernelDcacheInvalidateRange,
-    .KernelIcacheInvalidateAll = &sceKernelIcacheInvalidateAll,
-    .KernelDcacheWritebackInvalidateAll = &sceKernelDcacheWritebackInvalidateAll,
-    .KernelIOOpen = &sceIoOpen,
-    .KernelIORead = &sceIoRead,
-    .KernelIOWrite = &sceIoWrite,
-    .KernelIOClose = &sceIoClose,
-    .KernelIOMkdir = &sceIoMkdir,
-    .KernelDelayThread = &sceKernelDelayThread,
-};
-void onVitaFlashLoaded(){}
 
 // This patch injects Inferno with no ISO to simulate an empty UMD drive on homebrew
 int (*_sctrlKernelLoadExecVSHWithApitype)(int apitype, const char * file, struct SceKernelLoadExecVSHParam * param) = NULL;
@@ -98,12 +87,12 @@ int sceAudioOutput2ReleaseFixed(){
     return _sceAudioOutput2Release();
 }
 
-int infernoIoDevctl(char* drvname, u32 cmd, u32 arg2, u32 arg3, void* p, u32 s){
+int infernoIoDevctl(const char* drvname, u32 cmd, void* arg2, u32 arg3, void* p, u32 s){
     if (cmd == 0x02025801) drvname = "mscmhc0:";
     return sceIoDevctl(drvname, cmd, arg2, arg3, p, s);
 }
 
-void ARKVitaOnModuleStart(SceModule2 * mod){
+int ARKVitaOnModuleStart(SceModule2 * mod){
 
     // System fully booted Status
     static int booted = 0;
@@ -118,7 +107,7 @@ void ARKVitaOnModuleStart(SceModule2 * mod){
     // Patch Kermit Peripheral Module to load flash0
     if(strcmp(mod->modname, "sceKermitPeripheral_Driver") == 0)
     {
-        patchKermitPeripheral(&_ktbl);
+        patchKermitPeripheral();
         goto flush;
     }
     
@@ -143,13 +132,6 @@ void ARKVitaOnModuleStart(SceModule2 * mod){
         // Exit Handler
         goto flush;
     }
-
-    if (strcmp(mod->modname, "CWCHEATPRX") == 0) {
-        if (sceKernelInitKeyConfig() == PSP_INIT_KEYCONFIG_POPS) {
-            sctrlHookImportByNID(mod, "ThreadManForKernel", 0x9944F31F, sceKernelSuspendThreadPatched);
-        	goto flush;
-        }
-    }
     
     if (strcmp(mod->modname, "camera_patch_lite") == 0) {
         sctrlHookImportByNID(mod, "IoFileMgrForKernel", 0x109F50BC, ioOpenForCameraLite);
@@ -159,7 +141,7 @@ void ARKVitaOnModuleStart(SceModule2 * mod){
 
     if (strcmp(mod->modname, "sceImpose_Driver") == 0) {
         // Configure Inferno Cache
-        se_config->iso_cache_size = 32 * 1024;
+        se_config->iso_cache_size_kb = 32;
         se_config->iso_cache_num = 32;
         se_config->iso_cache_partition = (se_config->force_high_memory)? 2:11;
         goto flush;
@@ -188,12 +170,12 @@ void ARKVitaOnModuleStart(SceModule2 * mod){
 
             // patch bug in ePSP volatile mem
             _sceKernelVolatileMemTryLock = (void *)sctrlHENFindFunction("sceSystemMemoryManager", "sceSuspendForUser", 0xA14F40B2);
-            sctrlHENPatchSyscall((u32)_sceKernelVolatileMemTryLock, sceKernelVolatileMemTryLockPatched);
+            sctrlHENPatchSyscall((void*)_sceKernelVolatileMemTryLock, sceKernelVolatileMemTryLockPatched);
             
             // fix sound bug in ePSP (make sceAudioOutput2Release behave like real PSP)
             _sceAudioOutput2GetRestSample = (void *)sctrlHENFindFunction("sceAudio_Driver", "sceAudio", 0x647CEF33);
             _sceAudioOutput2Release = (void *)sctrlHENFindFunction("sceAudio_Driver", "sceAudio", 0x43196845);
-            sctrlHENPatchSyscall((u32)_sceAudioOutput2Release, sceAudioOutput2ReleaseFixed);
+            sctrlHENPatchSyscall((void*)_sceAudioOutput2Release, sceAudioOutput2ReleaseFixed);
 
             // Boot Complete Action done
             booted = 1;
@@ -204,9 +186,9 @@ void ARKVitaOnModuleStart(SceModule2 * mod){
 flush:
     sctrlFlushCache();
 
-exit:
     // Forward to previous Handler
-    if(previous) previous(mod);
+    if(previous) return previous(mod);
+    return 0;
 }
 
 int (*prev_start)(int modid, SceSize argsize, void * argp, int * modstatus, SceKernelSMOption * opt) = NULL;
@@ -249,7 +231,7 @@ int vitaMsIsEf(){
     return res;
 }
 
-void PROVitaSysPatch(){
+void initVitaSysPatch(){
 
     // filesystem patches
     initFileSystem();
