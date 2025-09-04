@@ -1,5 +1,8 @@
 TARGET = vitacompat
 
+PSPSDK = $(shell psp-config --pspsdk-path)
+ARKSDK ?= external
+
 C_OBJS =         \
 	main.o        \
 	src/vlf.o      \
@@ -15,7 +18,7 @@ OBJS = \
 	$(C_OBJS) imports.o
 
 all: $(TARGET).prx
-INCDIR = include external/include
+INCDIR = include $(ARKSDK)/include
 CFLAGS = -std=c99 -Os -G0 -Wall -fno-pic
 
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
@@ -27,7 +30,7 @@ PRX_EXPORTS = exports.exp
 USE_KERNEL_LIBC=1
 USE_KERNEL_LIBS=1
 
-LIBDIR = external/libs
+LIBDIR = $(ARKSDK)/libs
 LDFLAGS =  -nostartfiles
 LIBS = -lpspsystemctrl_kernel
 
