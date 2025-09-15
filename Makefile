@@ -1,7 +1,7 @@
 TARGET = vitacompat
 
 PSPSDK = $(shell psp-config --pspsdk-path)
-ARKSDK ?= external
+ARKSDK ?= ../ark-dev-sdk
 
 C_OBJS =         \
 	main.o        \
