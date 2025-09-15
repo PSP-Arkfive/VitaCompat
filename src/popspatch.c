@@ -124,7 +124,7 @@ static int myKernelLoadModule(char * fname, int flag, void * opt)
 }
 
 // Patch for 6.60 popsman to work on Vita
-void patchPspPopsman(SceModule2* mod){
+void patchPspPopsman(SceModule* mod){
     u32 text_addr = mod->text_addr;
 
     // TN hacks
@@ -158,7 +158,7 @@ void patchPspPopsman(SceModule2* mod){
 }
 
 // Patch for 6.60 pops to work on Vita
-void patchPspPops(SceModule2 * mod)
+void patchPspPops(SceModule * mod)
 {
     if (!spu_running) sctrlHookImportByNID(mod, "sceMeAudio", 0xDE630CD2, _sceMeAudio_DE630CD2);
 }

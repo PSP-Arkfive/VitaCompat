@@ -155,7 +155,7 @@ void patchFileSystemDirSyscall(void)
 }
 
 // Directory IO Patch for PSP-like Behaviour
-void patchFileManagerImports(SceModule2 * mod)
+void patchFileManagerImports(SceModule * mod)
 {
     if (sceKernelInitApitype() != 0x141)
         return;

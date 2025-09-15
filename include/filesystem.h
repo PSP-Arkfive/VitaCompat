@@ -25,11 +25,11 @@
 void initFileSystem();
 
 // Directory IO Patch for PSP-like Behaviour
-void patchFileManagerImports(SceModule2 * mod);
+void patchFileManagerImports(SceModule * mod);
 void patchFileSystemDirSyscall(void);
 
 // FileIO patch
-extern SceModule2* patchFileIO();
+extern SceModule* patchFileIO();
 
 // Flash0 patch
 int patchKermitPeripheral();
