@@ -92,7 +92,7 @@ int infernoIoDevctl(const char* drvname, u32 cmd, void* arg2, u32 arg3, void* p,
     return sceIoDevctl(drvname, cmd, arg2, arg3, p, s);
 }
 
-int ARKVitaOnModuleStart(SceModule * mod){
+void ARKVitaOnModuleStart(SceModule * mod){
 
     // System fully booted Status
     static int booted = 0;
@@ -187,8 +187,7 @@ flush:
     sctrlFlushCache();
 
     // Forward to previous Handler
-    if(previous) return previous(mod);
-    return 0;
+    if(previous) previous(mod);
 }
 
 int (*prev_start)(int modid, SceSize argsize, void * argp, int * modstatus, SceKernelSMOption * opt) = NULL;
