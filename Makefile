@@ -32,7 +32,7 @@ USE_KERNEL_LIBS=1
 
 LIBDIR = $(ARKSDK)/libs
 LDFLAGS =  -nostartfiles
-LIBS = -lpspsystemctrl_kernel
+LIBS = -lpspsystemctrl_kernel -lpspkermit_driver -lpspkermitperipheral_driver
 
 PSP_FW_VERSION = 660
 
