@@ -16,7 +16,7 @@
 #include "filesystem.h"
 #include "popspatch.h"
 
-extern SEConfig* se_config;
+extern SEConfigARK* se_config;
 extern RebootConfigARK* reboot_config;
 
 extern int sceKernelSuspendThreadPatched(SceUID thid);

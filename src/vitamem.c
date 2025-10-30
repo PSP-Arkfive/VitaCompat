@@ -13,7 +13,7 @@
 
 #include "sysmem.h"
 
-extern SEConfig* se_config;
+extern SEConfigARK* se_config;
 
 static u32 findGetPartition(){
     for (u32 addr = SYSMEM_TEXT; ; addr+=4){
